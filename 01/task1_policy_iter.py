@@ -41,34 +41,45 @@ def build():
 
 def policy_iteration(P,policy):
     iter = 0
-    while iter < 1:
+    while iter < 9:
         V = compute_policy(P,policy)
         policy = update_policy(V, P)
         iter +=1
-    return
+        print("\n iter: {}".format(iter))
+    return policy
 
 def compute_policy(P,policy):
     diff = 99999
-    eps = 0.1
+    eps = 0.0001
     V = np.zeros((N_STATES,))
+    x = 0
     while eps < diff:
-        V_new = V.copy()
+        V_prev = V.copy()
         for state in range(N_STATES):
             action = policy[state]
-            #print(action)
-            # summing over all actions
-            V_new[state] = sum([trans_prob * (reward + V[s_prim]) for (trans_prob, s_prim, reward, _ ) in P[state][action]])
-        diff = sum(np.fabs(V - V_new))
+            # summing over all actions to get to some next state.
+            V[state] = sum([trans_prob * (reward + V_prev[s_prim]) for trans_prob, s_prim, reward, _  in P[state][action]])
+        diff = np.sum(np.fabs(V_prev - V))
+        #print(V_new)
         print(diff)
-    return V_new
+        print("compute policy: {}".format(x))
+        x+=1
+    return V
 
-def update_policy(policy, P):
-
+def update_policy(V, P):
+    policy = list(np.arange(N_STATES))
+    for state in range(N_STATES):
+        q = np.zeros((N_ACTIONS,))
+        for a, action in enumerate(ACTIONS):
+            q[a] = sum([trans_prob * (reward + V[s_prim]) for trans_prob, s_prim, reward, _ in P[state][action]])
+        idx = np.argmax(q)
+        policy[state] = ACTIONS[idx]
     return policy
 
 P = build()
 policy = np.random.choice(ACTIONS, size=N_STATES)
-print(P)
 print(policy)
-#policy_iteration(P,policy)
+new_policy = policy_iteration(P,policy)
+print(policy)
+print(new_policy)
 
