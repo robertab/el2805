@@ -2,7 +2,7 @@ import numpy as np
 from typing import List
 from numpy import ndarray as Tensor
 import matplotlib.pyplot as plt
-
+from pprint import pprint
 
 N_COLS = 6
 N_ROWS = 5
@@ -59,6 +59,9 @@ def move_minotaur(row,col):
 
 
 def move_agent(row: int, col: int, action: str) -> (int, int):
+    prev_row = row
+    prev_col = col
+    prev_state = row*N_COLS+col
     if action == "R":
         col = min(N_COLS-1, col+1)
 
@@ -74,7 +77,13 @@ def move_agent(row: int, col: int, action: str) -> (int, int):
     if action == 'S':
         pass
 
-    return row,col
+    new_state = row*N_COLS+col  
+    
+    if not (prev_state,new_state) in walls:
+        return row,col
+    else:
+        return prev_row, prev_col
+
 
 def format_utility(U):
     utility = np.zeros((N_ROWS,N_COLS))
@@ -108,7 +117,7 @@ def policy_iteration(mdp: MDP) -> List:
     policy = np.random.choice(ACTIONS, size=N_STATES)
     U = np.zeros((len(mdp.states),))
     iter = 0
-    #current_state = 28
+    policy[28] = 'S'
     eps = 1e-4
     while iter < 20:
         U_prev = U.copy()
@@ -118,12 +127,18 @@ def policy_iteration(mdp: MDP) -> List:
         #    break
         for state in mdp.states:
             action = select_best_action(state,U,mdp)
-            if action != policy[state]:
+            if action != policy[state] and state != 28:
                 policy[state] = ACTIONS[action]
         iter += 1
         #printer(policy)
     
     return policy, U, iter, delta, eps
+
+def update_grid(a_row,a_col, m_row, m_col):
+    grid = [['-']*N_COLS for i in range(N_ROWS)]
+    grid[a_row][a_col] = 'A' 
+    grid[m_row][m_col] = 'M'
+    return grid
 
 def main():
     # transition matrix for any given action. size=(N_STATES,N_STATES,N_ACTIONS)
@@ -139,22 +154,26 @@ def main():
     # mark terminal state in Transistion Matrix
     T[terminal_state,:,:] = 0
     
-    mdp = MDP(states, ACTIONS, r, T, gamma)
-
+    #mdp = MDP(states, ACTIONS, r, T, gamma)
+    
     m_state = 28
     m_state_prev = m_state
-    mdp.r[m_state] = -1
+    #mdp.r[m_state] = -1
+    #T[m_state_prev,:,:] = 0
     m_row = 4
     m_col = 4
     
     utils = []
     minotaur_pos = []
-    T = 15
-    u = np.zeros((len(mdp.states),T))
-    p = np.random.choice(ACTIONS, size=(len(mdp.states),T))# [list(range(mdp.states)) for _ in range(T)]
+    TIME = 15
+    u = np.zeros((N_STATES,TIME))
+    p = np.random.choice(ACTIONS, size=(N_STATES,TIME))# [list(range(mdp.states)) for _ in range(T)]
     print(p.shape)
     print(u.shape)
-    for t in range(T):
+    for t in range(TIME):
+        mdp = MDP(states, ACTIONS, r.copy(), T, gamma)
+        mdp.r[m_state] = -1
+        
         policy, U, iter, delta, eps = policy_iteration(mdp)
         
         u[:,t] = U
@@ -163,10 +182,11 @@ def main():
         minotaur_pos.append([m_row,m_col])
         m_row, m_col = move_minotaur(m_row, m_col)
         m_state = m_row*N_COLS+m_col
-        mdp.r[m_state_prev] = 0
-        mdp.r[m_state] = -1
-        if not m_state == 28:
-            mdp.r[28] = 1
+        
+        #mdp.r[m_state_prev] = 0
+        #mdp.r[m_state] = -1
+        #if not m_state == 28:
+        #    mdp.r[28] = 1
 
         utility = format_utility(U)
 
@@ -187,21 +207,28 @@ def main():
         #plt.pcolormesh(utility[::-1])
         #plt.show()
 
+
     actions = []
-    row = 0
-    col = 0
+    a_row = 0
+    a_col = 0
     print(f'  A POS  M POS')
-    for i in range(T):
-        print(i,[row,col],minotaur_pos[i])
-        if minotaur_pos[i] == [row,col]:
+    for i in range(TIME):
+        print(i,[a_row,a_col],minotaur_pos[i])
+        if minotaur_pos[i] == [a_row,a_col]:
             print(f"AGENT DIED after {i} iterations!!!")
-        elif (row,col) == (4,4):
+        elif (a_row,a_col) == (4,4):
             print(f'AGENT WON!!!')
-        action = p[row*N_COLS+col,i]
+        
+        m_row, m_col = minotaur_pos[i]
+        grid = update_grid(a_row,a_col,m_row,m_col)
+        pprint(grid)
+        
+        action = p[a_row*N_COLS+a_col,i]
         actions.append(action)
-        row, col = move_agent(row,col,action)
-        util = u[row*N_COLS+col,i]
+        a_row, a_col = move_agent(a_row,a_col,action)
+        util = u[a_row*N_COLS+a_col,i]
         utils.append(util)
+    
 
     print(utils)
     print(actions)
