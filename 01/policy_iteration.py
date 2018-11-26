@@ -84,6 +84,13 @@ def move_agent(row: int, col: int, action: str) -> (int, int):
     else:
         return prev_row, prev_col
 
+def plot_grid(a_row, a_col, m_row, m_col):
+    g = np.zeros((N_ROWS,N_COLS))
+    g[a_row, a_col] = 1
+    g[m_row, m_col] = -1
+    plt.pcolormesh(g[::-1])
+    plt.show()
+
 
 def format_utility(U):
     utility = np.zeros((N_ROWS,N_COLS))
@@ -107,7 +114,7 @@ def select_best_action(state: int, U: List, mdp: MDP) -> int:
     return np.argmax(possible_actions)
 
 def policy_evaluation(policy: List, U: List, mdp: MDP) -> List:
-    for state in mdp.states:
+    for state in mdp.states[::-1]:
         # policy gives an acton
         action = ACTIONS.index(policy[state])
         U[state] = mdp.r[state] + mdp.gamma * np.sum(np.multiply(U, mdp.T[state,:,action]))
@@ -118,14 +125,20 @@ def policy_iteration(mdp: MDP) -> List:
     U = np.zeros((len(mdp.states),))
     iter = 0
     policy[28] = 'S'
-    eps = 1e-4
-    while iter < 20:
+    eps, delta = 1e-4, 0
+    max_iter = 20
+    while iter < max_iter:
         U_prev = U.copy()
         U = policy_evaluation(policy, U, mdp)
-        delta = np.abs(U-U_prev).max()
+        
+        #if np.all(U_prev==U):
+        #    print(f"BREAK AFTER {iter} iterations")
+        #    break
+        #delta = np.abs(U-U_prev).max()
         #if delta < eps * (1-mdp.gamma) / mdp.gamma:
         #    break
-        for state in mdp.states:
+        
+        for state in mdp.states[::-1]:
             action = select_best_action(state,U,mdp)
             if action != policy[state] and state != 28:
                 policy[state] = ACTIONS[action]
@@ -140,7 +153,7 @@ def update_grid(a_row,a_col, m_row, m_col):
     grid[m_row][m_col] = 'M'
     return grid
 
-def main():
+def simulate():
     # transition matrix for any given action. size=(N_STATES,N_STATES,N_ACTIONS)
     T = np.load('T.npy')
     gamma = 0.99
@@ -165,11 +178,12 @@ def main():
     
     utils = []
     minotaur_pos = []
+    
     TIME = 15
+    TIME = np.random.geometric(p=1/30, size=1)[0]
+
     u = np.zeros((N_STATES,TIME))
     p = np.random.choice(ACTIONS, size=(N_STATES,TIME))# [list(range(mdp.states)) for _ in range(T)]
-    print(p.shape)
-    print(u.shape)
     for t in range(TIME):
         mdp = MDP(states, ACTIONS, r.copy(), T, gamma)
         mdp.r[m_state] = -1
@@ -190,44 +204,60 @@ def main():
 
         utility = format_utility(U)
 
-        print("============= RESULT =============")
-        print()
-        print("Iterations: " + str(iter))
-        print("Delta: " + str(delta))
-        print("Gamma: " + str(gamma))
-        print("Epsilon: " + str(eps))
-        print(f"Utility:\n {utility}")
-        print(f"policy:")
-        printer(policy)
-        print(f'm_state: {m_state_prev}')
-        print("==================================")
+        #print("============= RESULT =============")
+        #print()
+        #print("Iterations: " + str(iter))
+        #print("Delta: " + str(delta))
+        #print("Gamma: " + str(gamma))
+        #print("Epsilon: " + str(eps))
+        #print(f"Utility:\n {utility}")
+        #print(f"policy:")
+        #printer(policy)
+        #print(f'm_state: {m_state_prev}')
+        #print("==================================")
         
         m_state_prev = m_state
 
         #plt.pcolormesh(utility[::-1])
         #plt.show()
 
+    plt.style.use('ggplot')
 
     actions = []
     a_row = 0
     a_col = 0
-    print(f'  A POS  M POS')
+    winning = []
+    loosing = []
+    #print(f'  A POS  M POS')
     for i in range(TIME):
-        print(i,[a_row,a_col],minotaur_pos[i])
+        ##print current positions of agent and minotaur
+        #print(i,[a_row,a_col],minotaur_pos[i])
+        
         if minotaur_pos[i] == [a_row,a_col]:
             print(f"AGENT DIED after {i} iterations!!!")
+            loosing.append(i)
+            break
         elif (a_row,a_col) == (4,4):
-            print(f'AGENT WON!!!')
-        
+            print(f'AGENT WON after {i} iterations!!!')
+            winning.append(i)
+            break
+
         m_row, m_col = minotaur_pos[i]
         grid = update_grid(a_row,a_col,m_row,m_col)
-        pprint(grid)
         
+        #print current grid status
+        #pprint(grid)
+
+        # plot current grid status
+        #plot_grid(a_row, a_col, m_row, m_col)
+
         action = p[a_row*N_COLS+a_col,i]
         actions.append(action)
         a_row, a_col = move_agent(a_row,a_col,action)
         util = u[a_row*N_COLS+a_col,i]
         utils.append(util)
+
+    return winning, loosing
     
 
     print(utils)
@@ -235,5 +265,22 @@ def main():
     plt.plot(utils)
     plt.show()
 
+def main():
+    iterations = 10000
+    wins = [] #list(range(iterations))
+    loss = [] #list(range(iterations))
+    for i in range(iterations):
+        print(i)
+        w, l = simulate()
+        wins+=w
+        loss+=l
+    print(wins, loss)
+    w = np.array(wins)
+    l = np.array(loss)
+    np.save('wins.npy',w)
+    np.save('loss',l)
+    print(len(wins), len(loss))
+    print(f"prob of winning: {len(wins)/iterations}")
+    print(f"prob of not been eaten: {1 - (len(loss)/iterations)}")
 if __name__=="__main__":
     main()

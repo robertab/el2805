@@ -30,6 +30,10 @@ def move(row,col, action):
     if not (current_state, new_state) in walls:
         s_prims[new_state] = 1
     
+    # CHECK HOW TO MARK GOAL STATE
+    #elif new_state == 28:
+    #    s_prims
+
     else:
         s_prims[new_state] = 0
 
