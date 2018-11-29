@@ -44,13 +44,22 @@ def q_learning(Q, state, a):
     """
     q = Q[s, a]
     # We need the next state obtained by performing action a
-
+    # Not yet implemented
+    # s_next = step()
     # Place holder values until the reward and step function is complete
     s_next = s
     r = 1
     step_size = 0.99
     # TODO (Robert): Literature says the max of functions rather than the Q[s_next, action]
     Q[s, a] = Q[s, a] + step_size * (r + gamma * Q[s_next, action] - Q[s, action])
+
+
+def step():
+    """
+    Function to take one step forward in the environment given the environment, state
+    and action. Returns a new state
+    """
+    raise NotImplementedError("Error: Not yet implemented!")
 
 
 def main():
