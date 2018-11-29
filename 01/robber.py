@@ -18,9 +18,29 @@ The reward for getting caught by the police results in a reward of -10
 
 Actions are performed uniformly at random (up, down, left, right, stay).
 We observer the position of the robber and the police at each time step.
+
+a) Solve the problem by implementing the Q-learning algorithm exploring actions uniformly at
+   random. Create a plot of the value function over time (in particular, for the initial state),
+   showing the convergence of the algorithm. Note: Expect the value function to converge
+   after roughly 10 000 000 iterations (for step size 1/n(s, a) 2/3 , where n(s, a) is the number of
+   updates of Q(s, a))
 """
 
 import numpy as np
+
+def q_learning(Q, state):
+    """
+    The main q_learning algorithm taken from p.107 from Introduction to Reinforcement Learning
+    by Sutton.
+
+    Input:
+    @Q - numpy ndarray [S x A] representing the state-action matrix that stores the best
+         action at state s
+    @state - double representing the current state we are investigating
+
+    Output:
+    @Q - numpy ndarray [S x A] updated state-action matrix.
+    """
 
 
 
