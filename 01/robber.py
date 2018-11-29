@@ -28,7 +28,7 @@ a) Solve the problem by implementing the Q-learning algorithm exploring actions 
 
 import numpy as np
 
-def q_learning(Q, state):
+def q_learning(Q, state, a):
     """
     The main q_learning algorithm taken from p.107 from Introduction to Reinforcement Learning
     by Sutton.
@@ -36,12 +36,21 @@ def q_learning(Q, state):
     Input:
     @Q - numpy ndarray [S x A] representing the state-action matrix that stores the best
          action at state s
-    @state - double representing the current state we are investigating
+    @s - double representing the current state we are investigating
+    @a - double, representing the current action we are doing at state s
 
     Output:
     @Q - numpy ndarray [S x A] updated state-action matrix.
     """
+    q = Q[s, a]
+    # We need the next state obtained by performing action a
 
+    # Place holder values until the reward and step function is complete
+    s_next = s
+    r = 1
+    step_size = 0.99
+    # TODO (Robert): Literature says the max of functions rather than the Q[s_next, action]
+    Q[s, a] = Q[s, a] + step_size * (r + gamma * Q[s_next, action] - Q[s, action])
 
 
 def main():
