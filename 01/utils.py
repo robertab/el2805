@@ -10,7 +10,7 @@ def north(state):
     >>> north((3, 4))
     (2, 4)
     """
-    return (state[0] - 1, state[1])
+    return [state[0] - 1, state[1]]
 
 def south(state):
     """
@@ -22,7 +22,7 @@ def south(state):
     (1, 0)
 
     """
-    return (state[0] + 1, state[1])
+    return [state[0] + 1, state[1]]
 
 def left(state):
     """
@@ -34,7 +34,7 @@ def left(state):
     (4, 2)
 
     """
-    return (state[0], state[1] - 1)
+    return [state[0], state[1] - 1]
 
 def right(state):
     """
@@ -45,4 +45,4 @@ def right(state):
     >>> right(pos)
     (5, 3)
     """
-    return (state[0], state[1] + 1)
+    return [state[0], state[1] + 1]
