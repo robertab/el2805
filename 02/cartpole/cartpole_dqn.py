@@ -77,8 +77,13 @@ class DQNAgent:
         #Insert your e-greedy policy code here
         #Tip 1: Use the random package to generate a random action.
         #Tip 2: Use keras.model.predict() to compute Q-values from the state.
-        action = random.randrange(self.action_size)
-        return action
+        q = self.target_model.predict(state)
+        a = np.ones(self.action_size) * (self.epsilon / self.action_size)
+        action = np.argmax(q)
+        a[action] = a[action] + (1 - self.epsilon)
+        new_action = np.random.choice(np.arange(len(a)), p=a)
+        # action = random.randrange(self.action_size)
+        return new_action
 ###############################################################################
 ###############################################################################
     #Save sample <s,a,r,s'> to the replay memory
