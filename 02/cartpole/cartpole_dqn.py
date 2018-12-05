@@ -15,8 +15,8 @@ EPISODES = 1000 #Maximum number of episodes
 class DQNAgent:
     #Constructor for the agent (invoked when DQN is first called in main)
     def __init__(self, state_size, action_size):
-        self.check_solve = False	#If True, stop if you satisfy solution confition
-        self.render = True        #If you want to see Cartpole learning, then change to True
+        self.check_solve = True	#If True, stop if you satisfy solution confition
+        self.render = False        #If you want to see Cartpole learning, then change to True
 
         #Get size of state and action
         self.state_size = state_size
@@ -118,7 +118,13 @@ class DQNAgent:
         #Tip 1: Observe that the Q-values are stored in the variable target
         #Tip 2: What is the Q-value of the action taken at the last state of the episode?
         for i in range(self.batch_size): #For every batch
-            target[i][action[i]] = random.randint(0,1)
+            # print("batching")
+            target_val[i][action[i]] = reward[i] + self.discount_factor * max(target_val[i])
+            # print(self.discount_factor * max(target_val[i]) + reward[i])
+        self.target_model.fit(update_input, target_val,
+                              batch_size=self.batch_size, epochs=1, verbose=0)
+            # target[i][action[i]] =
+            # target[i][action[i]] = random.randint(0,1)
 ###############################################################################
 ###############################################################################
 
