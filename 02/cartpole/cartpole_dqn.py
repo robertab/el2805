@@ -107,8 +107,9 @@ class DQNAgent:
             reward.append(mini_batch[i][2]) #Store r(i)
             update_target[i] = mini_batch[i][3] #Allocate s'(i) for the target network array from iteration i in the batch
             done.append(mini_batch[i][4])  #Store done(i)
-
+        # Line 8: Compute network values
         target = self.model.predict(update_input) #Generate target values for training the inner loop network using the network model
+        # Line 9: Compute target network values
         target_val = self.target_model.predict(update_target) #Generate the target values for training the outer loop target network
 
         #Q Learning: get maximum Q value at s' from target network
@@ -117,19 +118,16 @@ class DQNAgent:
         #Insert your Q-learning code here
         #Tip 1: Observe that the Q-values are stored in the variable target
         #Tip 2: What is the Q-value of the action taken at the last state of the episode?
+        y = np.zeros([self.batch_size, self.action_size])
+        # Line 10: Compute target vals y_i
         for i in range(self.batch_size): #For every batch
-            # print("batching")
-            target_val[i][action[i]] = reward[i] + self.discount_factor * max(target_val[i])
-            # print(self.discount_factor * max(target_val[i]) + reward[i])
-        self.target_model.fit(update_input, target_val,
-                              batch_size=self.batch_size, epochs=1, verbose=0)
-            # target[i][action[i]] =
-            # target[i][action[i]] = random.randint(0,1)
+            y[i] = reward[i] + self.discount_factor * np.max(target_val[i])
 ###############################################################################
 ###############################################################################
 
         #Train the inner loop network
-        self.model.fit(update_input, target, batch_size=self.batch_size,
+        # Line 11: Update network parameters
+        self.model.fit(update_input, y, batch_size=self.batch_size,
                        epochs=1, verbose=0)
         return
     #Plots the score per episode as well as the maximum q value per episode, averaged over precollected states.
