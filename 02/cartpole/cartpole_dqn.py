@@ -8,6 +8,8 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras.models import Sequential
 
+LAYER_SIZE = 24
+
 EPISODES = 1000 #Maximum number of episodes
 
 #DQN Agent for the Cartpole
@@ -15,7 +17,7 @@ EPISODES = 1000 #Maximum number of episodes
 class DQNAgent:
     #Constructor for the agent (invoked when DQN is first called in main)
     def __init__(self, state_size, action_size):
-        self.check_solve = True	#If True, stop if you satisfy solution confition
+        self.check_solve = False	#If True, stop if you satisfy solution confition
         self.render = False        #If you want to see Cartpole learning, then change to True
 
         #Get size of state and action
@@ -25,13 +27,13 @@ class DQNAgent:
 ################################################################################
 ################################################################################
         #Set hyper parameters for the DQN. Do not adjust those labeled as Fixed.
-        self.discount_factor = 0.95
+        self.discount_factor = .95
         self.learning_rate = 0.005
         self.epsilon = 0.02 #Fixed
         self.batch_size = 32 #Fixed
         self.memory_size = 1000
         self.train_start = 1000 #Fixed
-        self.target_update_frequency = 1
+        self.target_update_frequency = 20
 ################################################################################
 ################################################################################
 
@@ -56,8 +58,14 @@ class DQNAgent:
         #Tip: Consult https://keras.io/getting-started/sequential-model-guide/
     def build_model(self):
         model = Sequential()
-        model.add(Dense(16, input_dim=self.state_size, activation='relu',
+        model.add(Dense(LAYER_SIZE, input_dim=self.state_size, activation='relu',
                         kernel_initializer='he_uniform'))
+        model.add(Dense(LAYER_SIZE, activation='relu',
+                        kernel_initializer='he_uniform'))
+        # model.add(Dense(24, activation='relu',
+        #                 kernel_initializer='he_uniform'))
+        # model.add(Dense(12, input_dim=16, activation='relu',
+        #                 kernel_initializer='he_uniform'))
         model.add(Dense(self.action_size, activation='linear',
                         kernel_initializer='he_uniform'))
         model.summary()
@@ -72,18 +80,22 @@ class DQNAgent:
 
     #Get action from model using epsilon-greedy policy
     def get_action(self, state):
-###############################################################################
+##################################l#############################################
 ###############################################################################
         #Insert your e-greedy policy code here
         #Tip 1: Use the random package to generate a random action.
         #Tip 2: Use keras.model.predict() to compute Q-values from the state.
+        if np.random.rand() < self.epsilon:
+            return np.random.choice(self.action_size)
         q = self.target_model.predict(state)
-        a = np.ones(self.action_size) * (self.epsilon / self.action_size)
-        action = np.argmax(q)
-        a[action] = a[action] + (1 - self.epsilon)
-        new_action = np.random.choice(np.arange(len(a)), p=a)
+        return np.argmax(q[0])
+        # a = np.ones(self.action_size) * (self.epsilon / self.action_size)
+        # action = np.argmax(q)
+        # a[action] = a[action] + (1 - self.epsilon)
+        # new_action = np.random.choice(np.arange(len(a)), p=a)
         # action = random.randrange(self.action_size)
-        return new_action
+        # return new_action
+
 ###############################################################################
 ###############################################################################
     #Save sample <s,a,r,s'> to the replay memory
@@ -121,13 +133,16 @@ class DQNAgent:
         y = np.zeros([self.batch_size, self.action_size])
         # Line 10: Compute target vals y_i
         for i in range(self.batch_size): #For every batch
-            y[i] = reward[i] + self.discount_factor * np.max(target_val[i])
+            y[i, :] = reward[i]
+            if not done[i]:
+                y[i, :] += self.discount_factor * np.amax(target_val[i, :])
+            target[i, action[i]] = y[i, 0]
 ###############################################################################
 ###############################################################################
 
         #Train the inner loop network
         # Line 11: Update network parameters
-        self.model.fit(update_input, y, batch_size=self.batch_size,
+        self.model.fit(update_input, target, batch_size=self.batch_size,
                        epochs=1, verbose=0)
         return
     #Plots the score per episode as well as the maximum q value per episode, averaged over precollected states.
@@ -136,13 +151,13 @@ class DQNAgent:
         pylab.plot(episodes, max_q_mean, 'b')
         pylab.xlabel("Episodes")
         pylab.ylabel("Average Q Value")
-        pylab.savefig("qvalues.png")
+        pylab.savefig("qvalues-" + str(LAYER_SIZE) + "-" + str(LAYER_SIZE)  + "-" + str(self.target_update_frequency) + ".png")
 
         pylab.figure(1)
         pylab.plot(episodes, scores, 'b')
         pylab.xlabel("Episodes")
         pylab.ylabel("Score")
-        pylab.savefig("scores.png")
+        pylab.savefig("scores-" + str(LAYER_SIZE) + "-" + str(LAYER_SIZE)  + "-" +  str(self.target_update_frequency) + ".png")
 
 if __name__ == "__main__":
     #For CartPole-v0, maximum episode length is 200
